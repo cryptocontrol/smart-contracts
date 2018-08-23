@@ -7,7 +7,10 @@
     "test": "test"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "rimraf build; truffle compile",
+    "flatten": "(cd solidity-flattener; npm start ../contracts/Bitwords.sol)",
+    "start": "truffle develop",
+    "test": "truffle test"
   },
   "repository": {
     "type": "git",
