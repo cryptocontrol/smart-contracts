@@ -15,9 +15,10 @@ const cryptoControlPrivateKey = 'aa3680d5d48a8283413f7a108367c7299ca73f553735860
 contract('CryptoControlClaimReward', function (accounts) {
     beforeEach(async function () {
         this.token = await CryptoControlToken.new()
-        this.rewardContract = await CryptoControlClaimReward.new(cryptoControlPublicKey)
+        this.rewardContract = await CryptoControlClaimReward.new()
 
         await this.rewardContract.setTokenAddress(this.token.address)
+        await this.rewardContract.setCryptoControlServer(cryptoControlPublicKey)
         await this.token.addMinter(this.rewardContract.address)
 
     })
@@ -30,21 +31,22 @@ contract('CryptoControlClaimReward', function (accounts) {
         const userId = '123'
 
         const reward = 100
-        const nonce = Math.floor(Date.now() / 1000)
+        const nonce = Math.floor(Date.now() / 1000) + 60
         const rewardAddress = accounts[1]
 
         const { hash, data } = utils.generateHash(reward, rewardAddress, nonce, userId, cryptoControlPrivateKey)
 
-        console.log(
-            reward,
-            nonce,
-            userId,
+        console.log(`"${reward}","${nonce}","${userId}","${utils.bufferToHex(data)}","${hash.v}","${utils.bufferToHex(hash.r)}","${utils.bufferToHex(hash.s)}"`)
+        // console.log(
+        //     reward,
+        //     nonce,
+        //     userId,
 
-            utils.bufferToHex(data),
-            hash.v, utils.bufferToHex(hash.r), utils.bufferToHex(hash.s), {
-                from: rewardAddress
-            }
-        )
+        //     utils.bufferToHex(data),
+        //     hash.v, utils.bufferToHex(hash.r), utils.bufferToHex(hash.s), {
+        //         from: rewardAddress
+        //     }
+        // )
 
         beforeEach(async function () {
             this.result = await this.rewardContract.claimReward(

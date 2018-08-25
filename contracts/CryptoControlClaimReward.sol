@@ -7,10 +7,10 @@ import "./CryptoControlToken.sol";
 
 contract CryptoControlClaimReward is Ownable {
     // This address represents the CryptoControl server
-    address internal cryptoControlServer;
+    address public cryptoControlServer;
 
     // Address of the token smart contract
-    MintableToken token;
+    MintableToken public token;
 
     // A hashmap to track the nonce for a particular user id. This helps us avoid double
     // spends. Every claim fn. can he invoked only if the nonce passed is greater than 10 from

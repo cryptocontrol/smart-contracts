@@ -8,7 +8,7 @@
   },
   "scripts": {
     "build": "rimraf build; truffle compile",
-    "flatten": "(cd solidity-flattener; npm start ../contracts/CryptoControlToken.sol)",
+    "flatten": "bash ./flatten.sh",
     "start": "truffle develop",
     "test": "truffle test"
   },
