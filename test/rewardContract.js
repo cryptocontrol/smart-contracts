@@ -35,6 +35,16 @@ contract('CryptoControlClaimReward', function (accounts) {
 
         const { hash, data } = utils.generateHash(reward, rewardAddress, nonce, userId, cryptoControlPrivateKey)
 
+        console.log(
+            reward,
+            nonce,
+            userId,
+
+            utils.bufferToHex(data),
+            hash.v, utils.bufferToHex(hash.r), utils.bufferToHex(hash.s), {
+                from: rewardAddress
+            }
+        )
 
         beforeEach(async function () {
             this.result = await this.rewardContract.claimReward(
@@ -67,7 +77,8 @@ contract('CryptoControlClaimReward', function (accounts) {
             await assertRevert(
                 this.rewardContract.claimReward(
                     reward, nonce, userId, utils.bufferToHex(data),
-                    hash.v, utils.bufferToHex(hash.r), utils.bufferToHex(hash.s), {
+                    hash.v, utils.bufferToHex(hash.r), utils.bufferToHex(hash.s),
+                    {
                         from: rewardAddress
                     }
                 )

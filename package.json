@@ -8,7 +8,7 @@
   },
   "scripts": {
     "build": "rimraf build; truffle compile",
-    "flatten": "(cd solidity-flattener; npm start ../contracts/CryptoControlClaimReward.sol)",
+    "flatten": "(cd solidity-flattener; npm start ../contracts/CryptoControlToken.sol)",
     "start": "truffle develop",
     "test": "truffle test"
   },
@@ -26,7 +26,8 @@
   "dependencies": {
     "create-hash": "^1.2.0",
     "ethereumjs-util": "^5.2.0",
-    "openzeppelin-solidity": "1.12.0"
+    "openzeppelin-solidity": "1.12.0",
+    "truffle-hdwallet-provider": "^0.0.6"
   },
   "devDependencies": {
     "chai": "^4.1.2",

@@ -1,13 +1,13 @@
-pragma solidity ^0.4.22;
+pragma solidity ^0.4.24;
 
-import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
-import "openzeppelin-solidity/contracts/token/ERC20/MintableToken.sol";
+import "./openzeppelin-solidity/ownership/Ownable.sol";
+import "./openzeppelin-solidity/token/ERC20/MintableToken.sol";
 import "./CryptoControlToken.sol";
 
 
 contract CryptoControlClaimReward is Ownable {
     // This address represents the CryptoControl server
-    address public cryptoControlServer;
+    address internal cryptoControlServer;
 
     // Address of the token smart contract
     MintableToken token;
@@ -19,12 +19,6 @@ contract CryptoControlClaimReward is Ownable {
     mapping (string => uint256) internal timestamps;
 
     event RewardClaimed(address indexed dest, uint amount, uint nonce);
-
-
-    constructor (address _cryptoControlServer) public {
-        cryptoControlServer = _cryptoControlServer;
-    }
-
 
     /**
      * @dev Set the CryptoControlToken contract

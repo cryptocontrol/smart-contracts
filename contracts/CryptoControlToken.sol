@@ -1,6 +1,6 @@
-pragma solidity ^0.4.22;
+pragma solidity ^0.4.24;
 
-import "openzeppelin-solidity/contracts/token/ERC20/RBACMintableToken.sol";
+import "./openzeppelin-solidity/token/ERC20/RBACMintableToken.sol";
 
 
 contract CryptoControlToken is RBACMintableToken {
