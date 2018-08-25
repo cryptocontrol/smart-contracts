@@ -1,6 +1,6 @@
 {
   "name": "cryptocontrol-smart-contracts",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Smart contracts which mints tokens on the CryptoControl server",
   "main": "truffle-config.js",
   "directories": {

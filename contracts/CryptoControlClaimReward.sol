@@ -30,7 +30,7 @@ contract CryptoControlClaimReward is Ownable {
      * @dev Set the CryptoControlToken contract
      * @param _token The address of the CryptoControlToken contract
      */
-    function setTokenAddress (CryptoControlToken _token) public {
+    function setTokenAddress (CryptoControlToken _token) public onlyOwner {
         token = _token;
     }
 
