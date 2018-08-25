@@ -7,6 +7,7 @@ const CryptoControlClaimReward = artifacts.require('CryptoControlClaimReward')
 
 const utils = require('./utils')
 
+// These public/private key pairs are not used in production :)
 const cryptoControlPublicKey = '0x0f4f2ac550a1b4e2280d04c21cea7ebd822934b5'
 const cryptoControlPrivateKey = 'aa3680d5d48a8283413f7a108367c7299ca73f553735860a87b08f39395618b7'
 

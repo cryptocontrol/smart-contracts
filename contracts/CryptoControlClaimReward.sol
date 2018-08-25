@@ -57,7 +57,7 @@ contract CryptoControlClaimReward is Ownable {
 
         // check the nonce
         // require(now - 2 minutes > nonce, "Nonce is too small");
-        require((now - 2 minutes) > timestamps[userid], "Nonce is too small");
+        require((now - 2 minutes) > timestamps[userid], "A previous claim was made very recently");
         require(nonce > nonces[userid], "Nonce is smaller than previous nonce");
         timestamps[userid] = now;
         nonces[userid] = nonce;
