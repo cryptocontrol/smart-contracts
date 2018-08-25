@@ -88,6 +88,19 @@ contract('CryptoControlClaimReward', function (accounts) {
             );
         })
 
+        it('should revert a second claim reward with same nonce but at later time', async function () {
+            await increaseTime(60 * 5 + 1);
+
+            await assertRevert(
+                this.rewardContract.claimReward(
+                    reward, nonce, userId, utils.bufferToHex(data),
+                    hash.v, utils.bufferToHex(hash.r), utils.bufferToHex(hash.s), {
+                        from: rewardAddress
+                    }
+                )
+            )
+        })
+
 
         it('should not revert a second claim reward with higher nonce at later time', async function () {
             const newNonce = nonce + 60 * 5
