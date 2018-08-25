@@ -1,3 +1,7 @@
+const { assertRevert } = require('openzeppelin-solidity/test/helpers/assertRevert')
+const { increaseTime } = require('openzeppelin-solidity/test/helpers/increaseTime')
+const expectEvent = require('openzeppelin-solidity/test/helpers/expectEvent')
+
 const CryptoControlToken = artifacts.require('CryptoControlToken')
 const CryptoControlClaimReward = artifacts.require('CryptoControlClaimReward')
 
@@ -17,32 +21,9 @@ contract('CryptoControlClaimReward', function (accounts) {
 
     })
 
-
-    // beforeEach(async function () {
-    //     this.token = await CryptoControlToken.new()
-
-    //     this.rewardContract = await CryptoControlClaimReward.new()
-    //     await this.rewardContract.setTokenAddress(this.token)
-    // })
-
-
     it('should deploy properly', async function () {
         assert.notEqual(this.rewardContract, null)
     })
-
-
-    // it('test the verifyECDSA() function', async function () {
-    //     const data = '0x1c8aff950685c2ed4bc3174f3472287b56d9517b9c948127319a09a7a36deac8'
-    //     const v = 28
-    //     const r = '0xcc731914de74a532d7f514b8367fd8cc0ea396ab6b8b1c3996ccbff74fc4e729'
-    //     const s = '0x737db5e7ba1c3933327232ff6f9c75057fe7bd4e01aa6af992acb8b6d6a21241'
-
-    //     const p = '0x6B3Ae23e0801C5ff0A91921036Dd2ADf0C1512f6'.toLowerCase()
-
-    //     const result = await this.rewardContract.verifyECDSA(data, v, r, s)
-    //     assert.equal(result, p)
-    // })
-
 
     describe('claimReward()', async function () {
         const userId = '123'
@@ -53,71 +34,75 @@ contract('CryptoControlClaimReward', function (accounts) {
 
         const { hash, data } = utils.generateHash(reward, rewardAddress, nonce, userId, cryptoControlPrivateKey)
 
-        it('should not revert if the inputs are correct', async function () {
-            const result = await this.rewardContract.claimReward(
+
+        beforeEach(async function () {
+            this.result = await this.rewardContract.claimReward(
                 reward,
                 nonce,
                 userId,
 
                 utils.bufferToHex(data),
-                hash.v, utils.bufferToHex(hash.r), utils.bufferToHex(hash.s),
-                { from: rewardAddress }
+                hash.v, utils.bufferToHex(hash.r), utils.bufferToHex(hash.s), {
+                    from: rewardAddress
+                }
+            )
+        })
+
+
+        it('should mint tokens', async function () {
+            assert.notEqual(true, null)
+        })
+
+
+        it('should emit RewardClaimed() event with the right parameters', async function () {
+            const event = await expectEvent.inLogs(this.result.logs, 'RewardClaimed')
+            assert.equal(event.args.dest, rewardAddress)
+            assert.equal(event.args.amount, reward)
+            assert.equal(event.args.nonce, nonce)
+        })
+
+
+        it('should revert a second claim reward with same nonce', async function () {
+            await assertRevert(
+                this.rewardContract.claimReward(
+                    reward, nonce, userId, utils.bufferToHex(data),
+                    hash.v, utils.bufferToHex(hash.r), utils.bufferToHex(hash.s), {
+                        from: rewardAddress
+                    }
+                )
+            );
+        })
+
+
+        it('should revert a second claim reward with higher nonce but at the same time', async function () {
+            const newNonce = nonce + 60 * 5
+            const { hash, data } = utils.generateHash(reward, rewardAddress, newNonce, userId, cryptoControlPrivateKey)
+
+            await assertRevert(
+                this.rewardContract.claimReward(
+                    reward, newNonce, userId, utils.bufferToHex(data),
+                    hash.v, utils.bufferToHex(hash.r), utils.bufferToHex(hash.s), {
+                        from: rewardAddress
+                    }
+                )
+            );
+        })
+
+
+        it('should not revert a second claim reward with higher nonce at later time', async function () {
+            const newNonce = nonce + 60 * 5
+            const { hash, data } = utils.generateHash(reward, rewardAddress, newNonce, userId, cryptoControlPrivateKey)
+
+            await increaseTime(60 * 5 + 1);
+
+            const result = this.rewardContract.claimReward(
+                reward, newNonce, userId, utils.bufferToHex(data),
+                hash.v, utils.bufferToHex(hash.r), utils.bufferToHex(hash.s), {
+                    from: rewardAddress
+                }
             )
 
             assert.notEqual(result, null)
         })
-
-
-        // it('should break if inputs are incorrect', async function () {
-        //     const result = await this.rewardContract.claimReward(
-        //         reward,
-        //         rewardAddress,
-        //         nonce,
-
-        //         hash,
-        //         v, r, s
-        //     )
-        //     // assert.equal(result, true)
-        // })
-
-
-        // it('should mint tokens if everything is correct', async function () {
-        //     await this.rewardContract.claimReward(
-        //         reward,
-        //         rewardAddress,
-        //         nonce,
-
-        //         hash,
-        //         v, r, s
-        //     )
-
-        //     const n = await this.token.balanceOf(rewardAddress)
-        //     assert.equal(n, 100)
-        //     // assert.equal(result, true)
-        // })
     })
-
-    // it('prevent suicideContract() by a non-owner', async function () {
-    //     // const instance = await Suicidable.deployed()
-
-    //     // // attempt to suicide the contract
-    //     // await expectRevert(this.suicidable.suicideContract({
-    //     //     from: accounts[1]
-    //     // }))
-    // })
-
-
-    // it('allow suicideContract() by a previous owner', async function () {
-    //     // // Transfer ownership to account[1]
-    //     // await this.suicidable.transferOwnership(accounts[1])
-
-    //     // // attempt to suicide the contract
-    //     // this.suicidable.suicideContract({
-    //     //     from: accounts[0]
-    //     // })
-
-    //     // // check the suicide flag
-    //     // const hasSuicided = await this.suicidable.hasSuicided()
-    //     // assert.equal(hasSuicided, true)
-    // })
 })

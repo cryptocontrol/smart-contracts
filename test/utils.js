@@ -7,7 +7,6 @@ const generateHash = (amount, dest, nonce, userId, privateKey) => {
     const data = createHash('sha256')
         .update(numberToUint8(amount))
         .update(ethUtil.toBuffer(dest))
-        // .update(ethUtil.toBuffer(nonce))
         .update(numberToUint8(nonce))
         .update(ethUtil.toBuffer(userId))
         .digest()
