@@ -1,0 +1,3 @@
+[submodule "solidity-flattener"]
+	path = solidity-flattener
+	url = git@github.com:poanetwork/solidity-flattener.git
