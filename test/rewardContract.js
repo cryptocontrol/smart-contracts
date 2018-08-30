@@ -20,7 +20,6 @@ contract('CryptoControlClaimReward', function (accounts) {
         await this.rewardContract.setTokenAddress(this.token.address)
         await this.rewardContract.setCryptoControlServer(cryptoControlPublicKey)
         await this.token.addMinter(this.rewardContract.address)
-
     })
 
     it('should deploy properly', async function () {
