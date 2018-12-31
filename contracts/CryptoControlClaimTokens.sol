@@ -43,8 +43,7 @@ contract CryptoControlClaimTokens is Ownable {
         uint256 amount, uint256 nonce, string userid,
         bytes32 sighash, uint8 v, bytes32 r, bytes32 s) external payable {
         // Check if the signature matches the data sent
-        // bug with uint8 cast;
-        require(sha256(abi.encodePacked(uint8(amount), msg.sender, uint8(nonce), userid)) == sighash, "Signature mismatch");
+        require(sha256(abi.encodePacked(address(this), amount, msg.sender, nonce, userid)) == sighash, "Signature mismatch");
 
         // Check if the signature is sent by the cryptocontrol server
         require(ecrecover(sighash, v, r, s) == cryptoControlServer, "Signature is not from CryptoControl");
