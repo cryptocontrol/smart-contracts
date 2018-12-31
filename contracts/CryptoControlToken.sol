@@ -5,6 +5,6 @@ import "./openzeppelin-solidity/token/ERC20/RBACMintableToken.sol";
 
 contract CryptoControlToken is RBACMintableToken {
     string public name = "CryptoControl";
-    string public symbol = "CC";
+    string public symbol = "CCIO";
     uint8 public decimals = 18;
 }

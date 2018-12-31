@@ -5,7 +5,7 @@ import "./openzeppelin-solidity/token/ERC20/MintableToken.sol";
 import "./CryptoControlToken.sol";
 
 
-contract CryptoControlClaimReward is Ownable {
+contract CryptoControlClaimTokens is Ownable {
     // This address represents the CryptoControl server
     address public cryptoControlServer;
 
@@ -18,7 +18,7 @@ contract CryptoControlClaimReward is Ownable {
     mapping (string => uint256) internal nonces;
     mapping (string => uint256) internal timestamps;
 
-    event RewardClaimed(address indexed dest, uint amount, uint nonce, string userid);
+    event TokensClaimed(address indexed dest, uint amount, uint nonce, string userid);
 
     /**
      * @dev Set the CryptoControlToken contract
@@ -39,10 +39,9 @@ contract CryptoControlClaimReward is Ownable {
     /**
      * @dev This function is called by a person to claim a reward from CryptoControl.
      */
-    function claimReward(uint256 amount, uint256 nonce, string userid,
-    bytes32 sighash,
-    uint8 v, bytes32 r, bytes32 s) external payable
-    {
+    function claimTokens(
+        uint256 amount, uint256 nonce, string userid,
+        bytes32 sighash, uint8 v, bytes32 r, bytes32 s) external payable {
         // Check if the signature matches the data sent
         // bug with uint8 cast;
         require(sha256(abi.encodePacked(uint8(amount), msg.sender, uint8(nonce), userid)) == sighash, "Signature mismatch");
@@ -58,7 +57,7 @@ contract CryptoControlClaimReward is Ownable {
         nonces[userid] = nonce;
 
         // If everything is fine, then we mint new tokens for the user
-        token.mint(msg.sender, amount);
-        emit RewardClaimed(msg.sender, amount, nonce, userid);
+        token.transfer(msg.sender, amount);
+        emit TokensClaimed(msg.sender, amount, nonce, userid);
     }
 }
