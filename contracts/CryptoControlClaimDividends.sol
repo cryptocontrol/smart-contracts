@@ -5,6 +5,10 @@ import "./openzeppelin-solidity/token/ERC20/ERC20.sol";
 import "./openzeppelin-solidity/math/SafeMath.sol";
 
 
+/**
+ * This smart contracts allows CryptoControl to issue multiple dividends and distribute it to all users who hold
+ * the right commitment hash.
+ */
 contract CryptoControlClaimDividends is Ownable {
     using SafeMath for uint256;
 
@@ -21,8 +25,8 @@ contract CryptoControlClaimDividends is Ownable {
     mapping (string => uint256) internal timestamps;
 
     // to keep track of dividends being paid in and out
-    event Deposited(address indexed payee, uint256 dividendId, uint256 weiAmount);
-    event Withdrawn(address indexed payee, uint256 dividendId, uint256 weiAmount);
+    event Deposited(address indexed owner, uint256 dividendId, uint256 weiAmount);
+    event Withdrawn(address indexed owner, uint256 dividendId, uint256 weiAmount);
     mapping(uint256 => uint256) private deposits;
 
     event DividendsClaimed(address indexed dest, uint256 amount, uint256 dividendId, string userid);
@@ -54,7 +58,7 @@ contract CryptoControlClaimDividends is Ownable {
 
     /**
      * @dev Stores the sent amount as credit to be withdrawn.
-     * @param _payee The destination address of the funds.
+     * @param dividendId The destination dividend id to deposit into
      */
     function deposit(uint256 dividendId) public onlyOwner payable {
         uint256 amount = msg.value;
@@ -65,7 +69,7 @@ contract CryptoControlClaimDividends is Ownable {
 
     /**
      * @dev Withdraw accumulated balance for a payee.
-     * @param _payee The address whose funds will be withdrawn and transferred to.
+     * @param dividendId The destination dividend id to withdraw from
      */
     function withdraw(uint256 dividendId) public onlyOwner {
         uint256 payment = deposits[dividendId];
