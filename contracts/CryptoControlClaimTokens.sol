@@ -56,7 +56,7 @@ contract CryptoControlClaimTokens is Ownable {
         timestamps[userid] = now;
         nonces[userid] = nonce;
 
-        // If everything is fine, then we mint new tokens for the user
+        // If everything is fine, then we send the new tokens to the user
         token.transfer(msg.sender, amount);
         emit TokensClaimed(msg.sender, amount, nonce, userid);
     }
