@@ -9,4 +9,5 @@ contract CryptoControlToken is BurnableToken, PausableToken, CappedToken {
     string public name = "CryptoControl";
     string public symbol = "CCIO";
     uint8 public decimals = 18;
+    string public contactInformation = "contact@cryptocontrol.io";
 }
