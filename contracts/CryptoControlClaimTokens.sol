@@ -1,7 +1,7 @@
 pragma solidity ^0.4.24;
 
 import "./openzeppelin-solidity/ownership/Ownable.sol";
-import "./openzeppelin-solidity/token/ERC20/MintableToken.sol";
+import "./openzeppelin-solidity/token/ERC20/ERC20.sol";
 import "./CryptoControlToken.sol";
 
 
@@ -10,7 +10,7 @@ contract CryptoControlClaimTokens is Ownable {
     address public cryptoControlServer;
 
     // Address of the token smart contract
-    MintableToken public token;
+    ERC20 public token;
 
     // A hashmap to track the nonce for a particular user id. This helps us avoid double
     // spends. Every claim fn. can he invoked only if the nonce passed is greater than 10 from
@@ -20,13 +20,21 @@ contract CryptoControlClaimTokens is Ownable {
 
     event TokensClaimed(address indexed dest, uint amount, uint nonce, string userid);
 
+
+    constructor(ERC20 _token, address _ccioServerAddress) public payable {
+        token = _token;
+        cryptoControlServer = _ccioServerAddress;
+    }
+
+
     /**
      * @dev Set the CryptoControlToken contract
      * @param _token The address of the CryptoControlToken contract
      */
-    function setTokenAddress (CryptoControlToken _token) public onlyOwner {
+    function setTokenAddress (ERC20 _token) public onlyOwner {
         token = _token;
     }
+
 
     /**
      * @dev Set the wallet address of the CryptoControl server for verification
@@ -35,6 +43,7 @@ contract CryptoControlClaimTokens is Ownable {
     function setCryptoControlServer (address _newAddress) public onlyOwner {
         cryptoControlServer = _newAddress;
     }
+
 
     /**
      * @dev This function is called by a person to claim a reward from CryptoControl.

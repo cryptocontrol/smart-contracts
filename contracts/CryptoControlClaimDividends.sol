@@ -17,15 +17,21 @@ contract CryptoControlClaimDividends is Ownable {
     // A hashmap to track the dividendIds for a particular user id. This helps us avoid users from claiming dividneds twice.
     // Every claim fn. can be invoked only if the dividendId passed is greater than
     // the previous dividendId.
-    // mapping (string => uint256) internal nonces;
     mapping (string => uint256) dividendIds;
     mapping (string => uint256) internal timestamps;
 
+    // to keep track of dividends being paid in and out
     event Deposited(address indexed payee, uint256 dividendId, uint256 weiAmount);
     event Withdrawn(address indexed payee, uint256 dividendId, uint256 weiAmount);
     mapping(uint256 => uint256) private deposits;
 
     event DividendsClaimed(address indexed dest, uint256 amount, uint256 dividendId, string userid);
+
+
+    constructor(ERC20 _trueUSDToken, address _ccioServerAddress) public payable {
+        trueUSDToken = _trueUSDToken;
+        cryptoControlServer = _ccioServerAddress;
+    }
 
 
     /**
@@ -35,6 +41,7 @@ contract CryptoControlClaimDividends is Ownable {
     function setTokenAddress (ERC20 _trueUSDToken) public onlyOwner {
         trueUSDToken = _trueUSDToken;
     }
+
 
     /**
      * @dev Set the wallet address of the CryptoControl server for verification
@@ -72,7 +79,7 @@ contract CryptoControlClaimDividends is Ownable {
     /**
      * @dev This function is called by a person to claim a dividend from CryptoControl.
      */
-    function claimReward(
+    function claimDividends(
         uint256 amount, uint256 dividendId, string userid,
         bytes32 sighash, uint8 v, bytes32 r, bytes32 s) external payable
     {
