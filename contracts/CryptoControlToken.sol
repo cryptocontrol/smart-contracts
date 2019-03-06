@@ -7,12 +7,13 @@ import "./openzeppelin-solidity/token/ERC20/CappedToken.sol";
 
 
 contract CryptoControlToken is BurnableToken, PausableToken, CappedToken {
+    address public upgradedAddress;
+    bool public deprecated;
+    string public contactInformation = "contact@cryptocontrol.io";
     string public name = "CryptoControl";
+    string public reason;
     string public symbol = "CCIO";
     uint8 public decimals = 18;
-    string public contactInformation = "contact@cryptocontrol.io";
-    bool public deprecated;
-    address public upgradedAddress;
 
     constructor () CappedToken(10000000000000000000) public {}
 
@@ -53,14 +54,15 @@ contract CryptoControlToken is BurnableToken, PausableToken, CappedToken {
     }
 
     // deprecate current contract in favour of a new one
-    function deprecate(address _upgradedAddress) public onlyOwner {
+    function deprecate(address _upgradedAddress, string _reason) public onlyOwner {
         deprecated = true;
         upgradedAddress = _upgradedAddress;
-        emit Deprecate(_upgradedAddress);
+        reason = _reason;
+        emit Deprecate(_upgradedAddress, _reason);
     }
 
     // Called when contract is deprecated
-    event Deprecate(address newAddress);
+    event Deprecate(address newAddress, string reason);
 }
 
 
