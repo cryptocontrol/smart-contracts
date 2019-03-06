@@ -15,9 +15,9 @@ contract CryptoControlToken is BurnableToken, PausableToken, CappedToken {
     string public link = "https://github.com/cryptocontrol/smart-contracts";
     string public url = "https://github.com/cryptocontrol/smart-contracts";
     string public website = "https://cryptocontrol.io";
-    uint8 public decimals = 18;
+    uint8 public decimals = 8;
 
-    constructor () CappedToken(10000000000000000000) public {}
+    constructor () CappedToken(100000000000000000000) public {}
 
     // Fix for the ERC20 short address attack.
     modifier onlyPayloadSize(uint size) {
