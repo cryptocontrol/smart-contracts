@@ -1,7 +1,5 @@
 pragma solidity ^0.4.18;
 
-import "./openzeppelin-solidity/token/ERC20/ERC20.sol";
-
 
 contract DSAuthority {
     function canCall(address src, address dst, bytes4 sig) public view returns (bool);
@@ -123,6 +121,25 @@ contract DSMath {
             }
         }
     }
+}
+
+
+
+contract ERC20Events {
+    event Approval(address indexed src, address indexed guy, uint wad);
+    event Transfer(address indexed src, address indexed dst, uint wad);
+}
+
+contract ERC20 is ERC20Events {
+    function totalSupply() public view returns (uint);
+    function balanceOf(address guy) public view returns (uint);
+    function allowance(address src, address guy) public view returns (uint);
+
+    function approve(address guy, uint wad) public returns (bool);
+    function transfer(address dst, uint wad) public returns (bool);
+    function transferFrom(
+        address src, address dst, uint wad
+    ) public returns (bool);
 }
 
 
@@ -375,17 +392,14 @@ contract SimpleMarket is EventfulMarket, DSMath {
         );
     }
 
-    function take(bytes32 id, uint128 maxTakeAmount)
-        public
-    {
+    function take(bytes32 id, uint128 maxTakeAmount) public {
         require(buy(uint256(id), maxTakeAmount));
     }
 
-    function _next_id()
-        internal
-        returns (uint)
-    {
-        last_offer_id++; return last_offer_id;
+
+    function _next_id() internal returns (uint) {
+        last_offer_id++;
+        return last_offer_id;
     }
 }
 
@@ -486,11 +500,13 @@ contract MatchingMarket is MatchingEvents, ExpiringMarket, DSNote {
     mapping(address => uint) public _dust;                      //minimum sell amount for a token to avoid dust offers
     mapping(uint => uint) public _near;         //next unsorted offer id
     mapping(bytes32 => bool) public _menu;      //whitelist tracking which token pairs can be traded
+    mapping(bytes32 => uint) public _minrate;      //whitelist tracking which token pairs can be traded
     uint _head;                                 //first unsorted offer id
 
     //check if token pair is enabled
-    modifier isWhitelist(ERC20 buy_gem, ERC20 pay_gem) {
+    modifier isWhitelist(ERC20 buy_gem, ERC20 pay_gem, uint rate) {
         require(_menu[keccak256(buy_gem, pay_gem)] || _menu[keccak256(pay_gem, buy_gem)]);
+        require(rate >= _minrate[keccak256(buy_gem, pay_gem)] || _menu[keccak256(pay_gem, buy_gem)]);
         _;
     }
 
@@ -541,7 +557,7 @@ contract MatchingMarket is MatchingEvents, ExpiringMarket, DSNote {
         ERC20 buy_gem    //taker (ask) buy which token
     )
         public
-        isWhitelist(pay_gem, buy_gem)
+        isWhitelist(pay_gem, buy_gem, buy_amt / pay_amt)
         /* NOT synchronized!!! */
         returns (uint)
     {
@@ -558,7 +574,7 @@ contract MatchingMarket is MatchingEvents, ExpiringMarket, DSNote {
         uint pos         //position to insert offer, 0 should be used if unknown
     )
         public
-        isWhitelist(pay_gem, buy_gem)
+        isWhitelist(pay_gem, buy_gem, buy_amt / pay_amt)
         /*NOT synchronized!!! */
         can_offer
         returns (uint)
@@ -575,7 +591,7 @@ contract MatchingMarket is MatchingEvents, ExpiringMarket, DSNote {
         bool rounding    //match "close enough" orders?
     )
         public
-        isWhitelist(pay_gem, buy_gem)
+        isWhitelist(pay_gem, buy_gem, buy_amt / pay_amt)
         /*NOT synchronized!!! */
         can_offer
         returns (uint)
@@ -583,7 +599,7 @@ contract MatchingMarket is MatchingEvents, ExpiringMarket, DSNote {
         require(_dust[pay_gem] <= pay_amt);
 
         if (matchingEnabled) {
-          return _matcho(pay_amt, pay_gem, buy_amt, buy_gem, pos, rounding);
+            return _matcho(pay_amt, pay_gem, buy_amt, buy_gem, pos, rounding);
         }
         return super.offer(pay_amt, pay_gem, buy_amt, buy_gem);
     }
@@ -651,17 +667,16 @@ contract MatchingMarket is MatchingEvents, ExpiringMarket, DSNote {
     //  All incoming offers are checked against the whitelist.
     function addTokenPairWhitelist(
         ERC20 baseToken,
-        ERC20 quoteToken
-    )
-        public
-        auth
-        note
-    returns (bool)
-    {
+        ERC20 quoteToken,
+        uint minRate
+    ) public auth note returns (bool) {
         require(!isTokenPairWhitelisted(baseToken, quoteToken));
         require(address(baseToken) != 0x0 && address(quoteToken) != 0x0);
+        require(minRate >= 0);
 
         _menu[keccak256(baseToken, quoteToken)] = true;
+        _minrate[keccak256(baseToken, quoteToken)] = minRate;
+
         emit LogAddTokenPairWhitelist(baseToken, quoteToken);
         return true;
     }
@@ -669,15 +684,8 @@ contract MatchingMarket is MatchingEvents, ExpiringMarket, DSNote {
     //returns true if token is successfully removed from whitelist
     //  Function is used to remove a token pair from the whitelist.
     //  All incoming offers are checked against the whitelist.
-    function remTokenPairWhitelist(
-        ERC20 baseToken,
-        ERC20 quoteToken
-    )
-        public
-        auth
-        note
-    returns (bool)
-    {
+    function remTokenPairWhitelist(ERC20 baseToken, ERC20 quoteToken)
+        public auth note returns (bool) {
         require(isTokenPairWhitelisted(baseToken, quoteToken));
 
         delete _menu[keccak256(baseToken, quoteToken)];
@@ -686,49 +694,46 @@ contract MatchingMarket is MatchingEvents, ExpiringMarket, DSNote {
         return true;
     }
 
-    function isTokenPairWhitelisted(
-        ERC20 baseToken,
-        ERC20 quoteToken
-    ) public constant returns (bool) {
+
+    function isTokenPairWhitelisted(ERC20 baseToken, ERC20 quoteToken) public constant returns (bool) {
         return (_menu[keccak256(baseToken, quoteToken)] || _menu[keccak256(quoteToken, baseToken)]);
     }
 
-    //set the minimum sell amount for a token
-    //    Function is used to avoid "dust offers" that have
-    //    very small amount of tokens to sell, and it would
-    //    cost more gas to accept the offer, than the value
-    //    of tokens received.
-    function setMinSell(
-        ERC20 pay_gem,     //token to assign minimum sell amount to
-        uint dust          //maker (ask) minimum sell amount
-    )
-        public
-        auth
-        note
-        returns (bool)
-    {
+
+    /**
+     * @dev set the minimum sell amount for a token
+     * Function is used to avoid "dust offers" that have very small
+     * amount of tokens to sell, and it would cost more gas to accept
+     * the offer, than the value of tokens received.
+     *
+     * @param pay_gem token to assign minimum sell amount to
+     * @param dust maker (ask) minimum sell amount
+     */
+    function setMinSell(ERC20 pay_gem, uint dust) public auth note returns (bool) {
         _dust[pay_gem] = dust;
         LogMinSell(pay_gem, dust);
         return true;
     }
 
-    //returns the minimum sell amount for an offer
-    function getMinSell(
-        ERC20 pay_gem      //token for which minimum sell amount is queried
-    )
-        public
-        constant
-        returns (uint)
-    {
+
+    /**
+     * @dev returns the minimum sell amount for an offer
+     * @param pay_gem token for which minimum sell amount is queried
+     */
+    function getMinSell(ERC20 pay_gem) public constant returns (uint) {
         return _dust[pay_gem];
     }
 
-    //set buy functionality enabled/disabled
+
+    /**
+     * @dev set buy functionality enabled/disabled
+     */
     function setBuyEnabled(bool buyEnabled_) public auth returns (bool) {
         buyEnabled = buyEnabled_;
         LogBuyEnabled(buyEnabled);
         return true;
     }
+
 
     //set matching enabled/disabled
     //    If matchingEnabled true(default), then inserted offers are matched.
@@ -793,8 +798,7 @@ contract MatchingMarket is MatchingEvents, ExpiringMarket, DSNote {
     }
 
     function sellAllAmount(ERC20 pay_gem, uint pay_amt, ERC20 buy_gem, uint min_fill_amount)
-        public
-        returns (uint fill_amt)
+        public returns (uint fill_amt)
     {
         uint offerId;
         while (pay_amt > 0) {                           //while there is amount to sell
@@ -828,9 +832,7 @@ contract MatchingMarket is MatchingEvents, ExpiringMarket, DSNote {
 
 
     function buyAllAmount(ERC20 buy_gem, uint buy_amt, ERC20 pay_gem, uint max_fill_amount)
-        public
-        returns (uint fill_amt)
-    {
+        public returns (uint fill_amt) {
         uint offerId;
         while (buy_amt > 0) {                           //Meanwhile there is amount to buy
             offerId = getBestOffer(buy_gem, pay_gem);   //Get the best offer for the token pair
@@ -867,6 +869,7 @@ contract MatchingMarket is MatchingEvents, ExpiringMarket, DSNote {
         fill_amt = add(fill_amt, rmul(pay_amt * 10 ** 9, rdiv(offers[offerId].pay_amt, offers[offerId].buy_amt)) / 10 ** 9); //Add proportional amount of last offer to buy accumulator
     }
 
+
     function getPayAmount(ERC20 pay_gem, ERC20 buy_gem, uint buy_amt) public constant returns (uint fill_amt) {
         var offerId = getBestOffer(buy_gem, pay_gem);           // Get best offer for the token pair
         while (buy_amt > offers[offerId].pay_amt) {
@@ -879,6 +882,7 @@ contract MatchingMarket is MatchingEvents, ExpiringMarket, DSNote {
         }
         fill_amt = add(fill_amt, rmul(buy_amt * 10 ** 9, rdiv(offers[offerId].buy_amt, offers[offerId].pay_amt)) / 10 ** 9); //Add proportional amount of last offer to pay accumulator
     }
+
 
     // ---- Internal Functions ---- //
     function _buys(uint id, uint amount) internal returns (bool)
@@ -912,9 +916,7 @@ contract MatchingMarket is MatchingEvents, ExpiringMarket, DSNote {
     }
 
     // find the id of the next higher offer after offers[id]
-    function _findpos(uint id, uint pos) internal view
-    returns (uint)
-    {
+    function _findpos(uint id, uint pos) internal view returns (uint) {
         require(id > 0);
 
         // Look for an active order.
@@ -1031,7 +1033,6 @@ contract MatchingMarket is MatchingEvents, ExpiringMarket, DSNote {
         ERC20 buy_gem      //maker (ask) buy which token
     )
         internal
-        /*NOT synchronized!!! */
         returns (uint id)
     {
         require(_dust[pay_gem] <= pay_amt);
@@ -1045,10 +1046,9 @@ contract MatchingMarket is MatchingEvents, ExpiringMarket, DSNote {
     /**
      * put offer into the sorted list
      * @param id    maker (ask) id
-     * @param post  position to insert into
+     * @param pos  position to insert into
      */
-    function _sort(uint id, uint pos) internal
-    {
+    function _sort(uint id, uint pos) internal {
         require(isActive(id));
 
         address buy_gem = address(offers[id].buy_gem);
