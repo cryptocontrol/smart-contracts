@@ -1,6 +1,5 @@
-pragma solidity ^0.4.24;
+pragma solidity ^0.5.1;
 
-import "./openzeppelin-solidity/token/ERC20/StandardToken.sol";
 import "./openzeppelin-solidity/token/ERC20/BurnableToken.sol";
 import "./openzeppelin-solidity/token/ERC20/PausableToken.sol";
 import "./openzeppelin-solidity/token/ERC20/CappedToken.sol";
@@ -54,7 +53,7 @@ contract CryptoControlToken is BurnableToken, PausableToken, CappedToken {
     }
 
     // deprecate current contract in favour of a new one
-    function deprecate(address _upgradedAddress, string _reason) public onlyOwner {
+    function deprecate(address _upgradedAddress, string memory _reason) public onlyOwner {
         deprecated = true;
         upgradedAddress = _upgradedAddress;
         reason = _reason;
@@ -66,7 +65,7 @@ contract CryptoControlToken is BurnableToken, PausableToken, CappedToken {
 }
 
 
-contract UpgradedStandardToken is StandardToken{
+contract UpgradedStandardToken is PausableToken {
     // those methods are called by the legacy contract
     // and they must ensure msg.sender to be the contract address
     function transferByLegacy(address from, address to, uint value) public returns (bool);
