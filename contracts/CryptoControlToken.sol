@@ -12,6 +12,9 @@ contract CryptoControlToken is BurnableToken, PausableToken, CappedToken {
     string public name = "CryptoControl";
     string public reason;
     string public symbol = "CCIO";
+    string public link = "https://github.com/cryptocontrol/smart-contracts";
+    string public url = "https://github.com/cryptocontrol/smart-contracts";
+    string public website = "https://cryptocontrol.io";
     uint8 public decimals = 18;
 
     constructor () CappedToken(10000000000000000000) public {}
